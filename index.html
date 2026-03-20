@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Swapin — Encuesta de validación</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sage:      #4A7C59;
+  --sage-l:    #6FAA7B;
+  --sage-pale: #C8DEC0;
+  --clay:      #C7603A;
+  --clay-l:    #E8896A;
+  --sand:      #F2E8D9;
+  --sand-d:    #E0CFBA;
+  --ink:       #1C2B1E;
+  --white:     #FAFAF7;
+  --muted:     #7A8A7C;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 3px;
+  background: rgba(0,0,0,.08);
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sage), var(--clay));
+  border-radius: 0 2px 2px 0;
+  transition: width .5s cubic-bezier(.16,1,.3,1);
+  width: 0%;
+}
+
+/* ── LAYOUT ── */
+.survey-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 80px;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.survey-header {
+  background: var(--ink);
+  padding: 40px 28px 32px;
+  position: relative;
+  overflow: hidden;
+}
+.survey-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 80% 50%, rgba(74,124,89,.2) 0%, transparent 70%);
+}
+.sh-logo {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+  color: white; margin-bottom: 20px;
+  position: relative; z-index: 1;
+}
+.sh-logo span { color: var(--sage-l); }
+
+.sh-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 26px; font-weight: 800; line-height: 1.2;
+  color: white; margin-bottom: 10px;
+  position: relative; z-index: 1;
+}
+.sh-title em { font-style: normal; color: var(--clay-l); }
+
+.sh-sub {
+  font-size: 14px; color: rgba(255,255,255,.5);
+  font-weight: 300; line-height: 1.6;
+  position: relative; z-index: 1;
+  margin-bottom: 20px;
+}
+
+.sh-meta {
+  display: flex; gap: 16px;
+  position: relative; z-index: 1;
+}
+.sh-pill {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px; color: rgba(255,255,255,.5);
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* ── STEP INDICATOR ── */
+.step-indicator {
+  padding: 14px 28px;
+  background: var(--white);
+  border-bottom: 1px solid var(--sand-d);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.step-text {
+  font-size: 11px; font-weight: 500;
+  color: var(--muted); letter-spacing: .06em;
+}
+.step-text strong { color: var(--sage); }
+.step-dots { display: flex; gap: 5px; }
+.step-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--sand-d);
+  transition: background .3s, transform .3s;
+}
+.step-dot.done { background: var(--sage-l); }
+.step-dot.active { background: var(--sage); transform: scale(1.3); }
+
+/* ── SCREENS ── */
+.screen {
+  display: none;
+  animation: slide-in .35s cubic-bezier(.16,1,.3,1);
+}
+.screen.active { display: block; }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-back {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.screen.back { animation: slide-back .35s cubic-bezier(.16,1,.3,1); }
+
+/* ── QUESTION CARD ── */
+.q-card {
+  background: var(--white);
+  margin: 16px;
+  border-radius: 20px;
+  padding: 24px 22px;
+  box-shadow: 0 2px 12px rgba(28,43,30,.06);
+}
+
+.q-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--clay);
+  margin-bottom: 10px;
+}
+.q-text {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 18px; font-weight: 700; line-height: 1.3;
+  color: var(--ink); margin-bottom: 6px;
+}
+.q-hint {
+  font-size: 12px; color: var(--muted); font-weight: 300;
+  margin-bottom: 20px; line-height: 1.5;
+}
+
+/* ── OPTIONS ── */
+.options { display: flex; flex-direction: column; gap: 10px; }
+
+.option {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--sand);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.16,1,.3,1);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.option:hover { background: var(--sage-pale); border-color: var(--sage-l); }
+.option.selected {
+  background: rgba(74,124,89,.08);
+  border-color: var(--sage);
+}
+.option-radio {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--sand-d);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.option.selected .option-radio {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.option.selected .option-radio::after {
+  content: '';
+  width: 8px; height: 8px; border-radius: 50%;
+  background: white;
+}
+.option-checkbox {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid var(--sand-d);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.option.selected .option-checkbox {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.option.selected .option-checkbox::after {
+  content: '✓';
+  color: white; font-size: 11px; font-weight: 700;
+}
+.option-emoji { font-size: 20px; flex-shrink: 0; }
+.option-label { font-size: 14px; font-weight: 400; color: var(--ink); line-height: 1.3; }
+.option-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── SCALE ── */
+.scale-wrap { margin-top: 4px; }
+.scale-row {
+  display: flex; gap: 8px; justify-content: space-between; margin-bottom: 8px;
+}
+.scale-btn {
+  flex: 1; height: 48px;
+  background: var(--sand);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+.scale-btn:hover { background: var(--sage-pale); color: var(--sage); }
+.scale-btn.selected { background: var(--sage); border-color: var(--sage); color: white; }
+.scale-labels {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted); padding: 0 2px;
+}
+
+/* ── TEXTAREA ── */
+.q-textarea {
+  width: 100%; min-height: 100px;
+  background: var(--sand);
+  border: 2px solid var(--sand-d);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--ink);
+  resize: none; outline: none;
+  line-height: 1.6;
+  transition: border-color .2s;
+}
+.q-textarea:focus { border-color: var(--sage); background: var(--white); }
+.q-textarea::placeholder { color: var(--muted); }
+
+/* ── TEXT INPUT ── */
+.q-input {
+  width: 100%;
+  background: var(--sand);
+  border: 2px solid var(--sand-d);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--ink);
+  outline: none;
+  transition: border-color .2s;
+}
+.q-input:focus { border-color: var(--sage); background: var(--white); }
+.q-input::placeholder { color: var(--muted); }
+
+/* ── SEGMENTED ── */
+.segment-wrap { display: flex; background: var(--sand); border-radius: 12px; padding: 4px; gap: 4px; }
+.segment-btn {
+  flex: 1; padding: 10px 8px; border-radius: 9px;
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  cursor: pointer; text-align: center;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.segment-btn.selected { background: white; color: var(--sage); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+/* ── NAV BUTTONS ── */
+.q-nav {
+  padding: 8px 16px 16px;
+  display: flex; gap: 10px;
+}
+.btn-next {
+  flex: 1;
+  background: var(--clay);
+  color: white;
+  border-radius: 14px;
+  padding: 16px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 16px; font-weight: 700;
+  text-align: center; cursor: pointer;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-next:hover { background: var(--clay-l); }
+.btn-next:active { transform: scale(.98); }
+.btn-next.disabled { background: var(--sand-d); color: var(--muted); cursor: not-allowed; }
+
+.btn-back {
+  width: 52px; height: 52px;
+  background: var(--white);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px;
+  transition: all .2s; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-back:hover { background: var(--sand); }
+
+/* ── SECTION INTRO ── */
+.section-intro {
+  background: var(--sage);
+  margin: 16px;
+  border-radius: 20px;
+  padding: 24px 22px;
+  color: white;
+}
+.si-icon { font-size: 32px; margin-bottom: 12px; }
+.si-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.si-desc { font-size: 13px; color: rgba(255,255,255,.7); line-height: 1.6; font-weight: 300; }
+
+/* ── CONCEPT CARD ── */
+.concept-card {
+  background: var(--ink);
+  margin: 0 16px 0;
+  border-radius: 20px;
+  padding: 24px 22px;
+  color: white;
+  position: relative; overflow: hidden;
+}
+.concept-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 80% 50%, rgba(74,124,89,.2) 0%, transparent 70%);
+}
+.cc-content { position: relative; z-index: 1; }
+.cc-tag {
+  display: inline-block;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 10px; color: var(--sage-pale); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.cc-name {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  color: white; margin-bottom: 6px;
+}
+.cc-name span { color: var(--sage-l); }
+.cc-tagline {
+  font-size: 13px; color: rgba(255,255,255,.5); font-style: italic;
+  font-weight: 300; margin-bottom: 16px; line-height: 1.5;
+}
+.cc-features { display: flex; flex-direction: column; gap: 8px; }
+.cc-feat {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: rgba(255,255,255,.7); font-weight: 300; line-height: 1.4;
+}
+.cc-feat-dot { width: 6px; height: 6px; background: var(--clay-l); border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+
+/* ── THANK YOU ── */
+.thankyou {
+  display: none;
+  text-align: center;
+  padding: 48px 28px 80px;
+  animation: slide-in .5s cubic-bezier(.16,1,.3,1);
+}
+.thankyou.active { display: block; }
+.ty-icon { font-size: 64px; margin-bottom: 20px; }
+.ty-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 28px; font-weight: 800; color: var(--ink); margin-bottom: 10px;
+}
+.ty-sub {
+  font-size: 15px; color: var(--muted); line-height: 1.6; font-weight: 300;
+  margin-bottom: 32px; max-width: 320px; margin-left: auto; margin-right: auto;
+}
+.ty-card {
+  background: var(--white); border-radius: 20px; padding: 24px;
+  margin-bottom: 16px; text-align: left;
+}
+.ty-card-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.ty-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; font-weight: 300; }
+.ty-logo { font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 32px; }
+.ty-logo span { color: var(--sage); }
+
+/* ── OPTIONAL BADGE ── */
+.optional-badge {
+  display: inline-block;
+  background: var(--sand-d); color: var(--muted);
+  font-size: 10px; padding: 3px 8px; border-radius: 20px;
+  margin-left: 8px; vertical-align: middle; font-weight: 400;
+}
+
+/* ── CHAR COUNT ── */
+.char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="survey-wrap">
+
+  <!-- HEADER -->
+  <div class="survey-header">
+    <div class="sh-logo">swap<span>in</span></div>
+    <div class="sh-title">Ayúdanos a <em>entenderte</em> mejor</div>
+    <div class="sh-sub">Estamos diseñando una nueva forma de alquilar objetos entre vecinos en Barcelona. Solo 3 minutos, anónimo.</div>
+    <div class="sh-meta">
+      <div class="sh-pill">⏱ 3 min</div>
+      <div class="sh-pill">🔒 Anónimo</div>
+      <div class="sh-pill">📍 Barcelona</div>
+    </div>
+  </div>
+
+  <!-- STEP INDICATOR -->
+  <div class="step-indicator" id="stepIndicator">
+    <span class="step-text">Pregunta <strong id="stepCurrent">1</strong> de <strong id="stepTotal">12</strong></span>
+    <div class="step-dots" id="stepDots"></div>
+  </div>
+
+  <!-- ════ PANTALLA 1: Perfil ════ -->
+  <div class="screen active" id="s1">
+    <div class="section-intro">
+      <div class="si-icon">👤</div>
+      <div class="si-title">Cuéntanos un poco sobre ti</div>
+      <div class="si-desc">3 preguntas rápidas para entender tu contexto.</div>
+    </div>
+    <div class="q-card" style="margin-top:12px;">
+      <div class="q-label">Pregunta 1 de 12</div>
+      <div class="q-text">¿Cuántos años tienes?</div>
+      <div class="q-hint">Selecciona tu rango de edad.</div>
+      <div class="options" id="opts1">
+        <div class="option" data-q="1" data-v="menor18" onclick="selectOption(this,'radio')">
+          <div class="option-radio"></div><div class="option-emoji">🧒</div>
+          <div class="option-label">Menos de 18</div>
+        </div>
+        <div class="option" data-q="1" data-v="18-25" onclick="selectOption(this,'radio')">
+          <div class="option-radio"></div><div class="option-emoji">🎓</div>
+          <div class="option-label">18 – 25 años</div>
+        </div>
+        <div class="option" data-q="1" data-v="26-35" onclick="selectOption(this,'radio')">
+          <div class="option-radio"></div><div class="option-emoji">💼</div>
+          <div class="option-label">26 – 35 años</div>
+        </div>
+        <div class="option" data-q="1" data-v="36-45" onclick="selectOption(this,'radio')">
+          <div class="option-radio"></div><div class="option-emoji">🏡</div>
+          <div class="option-label">36 – 45 años</div>
+        </div>
+        <div class="option" data-q="1" data-v="mas45" onclick="selectOption(this,'radio')">
+          <div class="option-radio"></div><div class="option-emoji">🌿</div>
+          <div class="option-label">Más de 45</div>
+        </div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-next disabled" id="next1" onclick="goNext(1)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 2 ════ -->
+  <div class="screen" id="s2">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 2 de 12</div>
+      <div class="q-text">¿En qué zona de Barcelona vives?</div>
+      <div class="options" id="opts2">
+        <div class="option" data-q="2" data-v="gracia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Gràcia / Sarrià / Les Corts</div></div>
+        <div class="option" data-q="2" data-v="eixample" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Eixample / Sant Antoni</div></div>
+        <div class="option" data-q="2" data-v="poblenou" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Poblenou / Sant Martí</div></div>
+        <div class="option" data-q="2" data-v="sants" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Sants / Montjuïc / Hostafrancs</div></div>
+        <div class="option" data-q="2" data-v="horta" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Horta / Nou Barris / Sant Andreu</div></div>
+        <div class="option" data-q="2" data-v="gotico" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Gótico / Barceloneta / El Born</div></div>
+        <div class="option" data-q="2" data-v="area_metro" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Área metropolitana (fuera BCN)</div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(2)">←</div>
+      <div class="btn-next disabled" id="next2" onclick="goNext(2)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 3 ════ -->
+  <div class="screen" id="s3">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 3 de 12</div>
+      <div class="q-text">¿Con quién vives actualmente?</div>
+      <div class="options" id="opts3">
+        <div class="option" data-q="3" data-v="solo" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🙋</div><div class="option-label">Solo/a</div></div>
+        <div class="option" data-q="3" data-v="pareja" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">👫</div><div class="option-label">En pareja</div></div>
+        <div class="option" data-q="3" data-v="familia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">👨‍👩‍👧</div><div class="option-label">Con familia / hijos</div></div>
+        <div class="option" data-q="3" data-v="compis" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🏠</div><div class="option-label">Con compañeros de piso</div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(3)">←</div>
+      <div class="btn-next disabled" id="next3" onclick="goNext(3)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 4: Hábitos de consumo ════ -->
+  <div class="screen" id="s4">
+    <div class="section-intro">
+      <div class="si-icon">🔄</div>
+      <div class="si-title">Tus hábitos con objetos</div>
+      <div class="si-desc">Queremos entender cómo usas y gestionas tus cosas del día a día.</div>
+    </div>
+    <div class="q-card" style="margin-top:12px;">
+      <div class="q-label">Pregunta 4 de 12</div>
+      <div class="q-text">¿Con qué frecuencia necesitas algo que no tienes en casa?</div>
+      <div class="q-hint">Herramientas, equipo deportivo, material de acampada…</div>
+      <div class="options" id="opts4">
+        <div class="option" data-q="4" data-v="nunca" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Casi nunca<div class="option-sub">Tengo todo lo que necesito</div></div></div>
+        <div class="option" data-q="4" data-v="raro" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Alguna vez al año<div class="option-sub">Puntualmente en vacaciones o proyectos</div></div></div>
+        <div class="option" data-q="4" data-v="mensual" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Cada mes o dos meses<div class="option-sub">Con cierta regularidad</div></div></div>
+        <div class="option" data-q="4" data-v="frecuente" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Muy frecuentemente<div class="option-sub">Casi cada semana</div></div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(4)">←</div>
+      <div class="btn-next disabled" id="next4" onclick="goNext(4)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 5 ════ -->
+  <div class="screen" id="s5">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 5 de 12</div>
+      <div class="q-text">Cuando necesitas algo que no tienes, ¿qué sueles hacer?</div>
+      <div class="q-hint">Puedes seleccionar varias opciones.</div>
+      <div class="options" id="opts5">
+        <div class="option" data-q="5" data-v="compro" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🛒</div><div class="option-label">Lo compro<div class="option-sub">Aunque lo use poco</div></div></div>
+        <div class="option" data-q="5" data-v="pido_amigos" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">👥</div><div class="option-label">Se lo pido a amigos o familia<div class="option-sub">Si alguien lo tiene</div></div></div>
+        <div class="option" data-q="5" data-v="alquiler_tienda" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🏪</div><div class="option-label">Lo alquilo en una tienda<div class="option-sub">Decathlon, Intersport…</div></div></div>
+        <div class="option" data-q="5" data-v="wallapop" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">📱</div><div class="option-label">Busco en Wallapop / segunda mano<div class="option-sub">Para comprar barato</div></div></div>
+        <div class="option" data-q="5" data-v="prescindo" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🙅</div><div class="option-label">Prescindo de ello<div class="option-sub">No hago lo que quería hacer</div></div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(5)">←</div>
+      <div class="btn-next disabled" id="next5" onclick="goNext(5)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 6 ════ -->
+  <div class="screen" id="s6">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 6 de 12</div>
+      <div class="q-text">¿Tienes objetos en casa que apenas usas?</div>
+      <div class="q-hint">Sé honesto/a, ¡todos tenemos alguno!</div>
+      <div class="options" id="opts6">
+        <div class="option" data-q="6" data-v="muchos" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">📦</div><div class="option-label">Sí, bastantes<div class="option-sub">Mi casa podría ser un almacén</div></div></div>
+        <div class="option" data-q="6" data-v="algunos" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🗃️</div><div class="option-label">Sí, algunos<div class="option-sub">Cosas que usé una o dos veces</div></div></div>
+        <div class="option" data-q="6" data-v="pocos" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">✨</div><div class="option-label">Muy pocos<div class="option-sub">Soy bastante minimalista</div></div></div>
+        <div class="option" data-q="6" data-v="no" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🎯</div><div class="option-label">No, todo lo uso<div class="option-sub">Solo tengo lo que necesito</div></div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(6)">←</div>
+      <div class="btn-next disabled" id="next6" onclick="goNext(6)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 7: Concepto ════ -->
+  <div class="screen" id="s7">
+    <div class="concept-card" style="margin-top:16px;">
+      <div class="cc-content">
+        <div class="cc-tag">Concepto · Swapin</div>
+        <div class="cc-name">swap<span>in</span></div>
+        <div class="cc-tagline">"Cada objeto tiene su experiencia, comparte la tuya."</div>
+        <div class="cc-features">
+          <div class="cc-feat"><div class="cc-feat-dot"></div>Alquila objetos de personas de tu barrio (bici, carpa, tabla de surf, taladro…)</div>
+          <div class="cc-feat"><div class="cc-feat-dot"></div>Publica tus objetos y gana dinero cuando no los usas</div>
+          <div class="cc-feat"><div class="cc-feat-dot"></div>Todo verificado, pago seguro, desde 5€/día</div>
+          <div class="cc-feat"><div class="cc-feat-dot"></div>Comunidad local en Barcelona</div>
+        </div>
+      </div>
+    </div>
+    <div class="q-card" style="margin-top:12px;">
+      <div class="q-label">Pregunta 7 de 12</div>
+      <div class="q-text">¿Cuál es tu primera reacción a esta idea?</div>
+      <div class="options" id="opts7">
+        <div class="option" data-q="7" data-v="encanta" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🤩</div><div class="option-label">Me encanta, la usaría ahora mismo</div></div>
+        <div class="option" data-q="7" data-v="interesa" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🤔</div><div class="option-label">Me interesa, dependería de cómo funcione</div></div>
+        <div class="option" data-q="7" data-v="dudas" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">😐</div><div class="option-label">Tengo bastantes dudas</div></div>
+        <div class="option" data-q="7" data-v="nousaria" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🙅</div><div class="option-label">No la usaría</div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(7)">←</div>
+      <div class="btn-next disabled" id="next7" onclick="goNext(7)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 8 ════ -->
+  <div class="screen" id="s8">
+    <div class="section-intro">
+      <div class="si-icon">🏄</div>
+      <div class="si-title">Si pudieras alquilar…</div>
+      <div class="si-desc">Cuéntanos qué objetos te resultarían más útiles poder alquilar cerca de casa.</div>
+    </div>
+    <div class="q-card" style="margin-top:12px;">
+      <div class="q-label">Pregunta 8 de 12</div>
+      <div class="q-text">¿Qué objetos te gustaría poder alquilar de un vecino?</div>
+      <div class="q-hint">Selecciona todos los que te interesen.</div>
+      <div class="options" id="opts8">
+        <div class="option" data-q="8" data-v="bici" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🚴</div><div class="option-label">Bicicleta / patinete</div></div>
+        <div class="option" data-q="8" data-v="carpa" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🏕️</div><div class="option-label">Equipo de acampada (carpa, saco…)</div></div>
+        <div class="option" data-q="8" data-v="surf" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🏄</div><div class="option-label">Tabla de surf / paddle surf</div></div>
+        <div class="option" data-q="8" data-v="herramientas" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🔨</div><div class="option-label">Herramientas (taladro, lijadora…)</div></div>
+        <div class="option" data-q="8" data-v="esqui" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🎿</div><div class="option-label">Esquís / snowboard</div></div>
+        <div class="option" data-q="8" data-v="foto" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">📷</div><div class="option-label">Cámara / equipo fotográfico</div></div>
+        <div class="option" data-q="8" data-v="jardin" onclick="selectOption(this,'check')"><div class="option-checkbox"></div><div class="option-emoji">🌱</div><div class="option-label">Equipo de jardín / barbacoa</div></div>
+        <div class="option" data-q="8" data-v="otro" onclick="selectOption(this,'check'); toggleOtroInput(this)"><div class="option-checkbox"></div><div class="option-emoji">➕</div><div class="option-label">Otros<div class="option-sub">¿Cuál? Escríbelo abajo</div></div></div>
+      </div>
+      <div id="otro-input-wrap" style="display:none; margin-top:12px;">
+        <input
+          type="text"
+          id="otro-input"
+          class="q-textarea"
+          placeholder="¿Qué objeto alquilarías? Escríbelo aquí…"
+          style="min-height:auto; padding:14px 16px; border-radius:14px; font-size:14px;"
+          oninput="saveOtroValue(this)"
+        >
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(8)">←</div>
+      <div class="btn-next disabled" id="next8" onclick="goNext(8)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 9 ════ -->
+  <div class="screen" id="s9">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 9 de 12</div>
+      <div class="q-text">¿Estarías dispuesto/a a alquilar tus objetos a desconocidos?</div>
+      <div class="options" id="opts9">
+        <div class="option" data-q="9" data-v="si_claro" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">✅</div><div class="option-label">Sí, sin problema<div class="option-sub">Si hay garantías básicas</div></div></div>
+        <div class="option" data-q="9" data-v="si_pero" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🤔</div><div class="option-label">Sí, pero con condiciones<div class="option-sub">Necesitaría ver el perfil del usuario</div></div></div>
+        <div class="option" data-q="9" data-v="dudas" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">😬</div><div class="option-label">Me genera dudas<div class="option-sub">No sé si lo haría</div></div></div>
+        <div class="option" data-q="9" data-v="no" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🙅</div><div class="option-label">No, no me fiaría</div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(9)">←</div>
+      <div class="btn-next disabled" id="next9" onclick="goNext(9)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 10 ════ -->
+  <div class="screen" id="s10">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 10 de 12</div>
+      <div class="q-text">¿Qué es lo que más te frenaría a usar Swapin?</div>
+      <div class="q-hint">Selecciona tu principal preocupación.</div>
+      <div class="options" id="opts10">
+        <div class="option" data-q="10" data-v="confianza" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🔐</div><div class="option-label">No me fío de desconocidos<div class="option-sub">No sé quién va a usar mis cosas</div></div></div>
+        <div class="option" data-q="10" data-v="danos" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">💔</div><div class="option-label">Que dañen o pierdan el objeto<div class="option-sub">¿Quién responde si algo sale mal?</div></div></div>
+        <div class="option" data-q="10" data-v="molestia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">😓</div><div class="option-label">Es complicado logísticamente<div class="option-sub">Quedar para entregar, horarios…</div></div></div>
+        <div class="option" data-q="10" data-v="precio" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">💶</div><div class="option-label">El precio no compensa<div class="option-sub">Prefiero comprar directamente</div></div></div>
+        <div class="option" data-q="10" data-v="nada" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">👍</div><div class="option-label">Nada, me parece bien la idea<div class="option-sub">Lo usaría sin problema</div></div></div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(10)">←</div>
+      <div class="btn-next disabled" id="next10" onclick="goNext(10)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 11 ════ -->
+  <div class="screen" id="s11">
+    <div class="q-card" style="margin-top:16px;">
+      <div class="q-label">Pregunta 11 de 12</div>
+      <div class="q-text">¿Cuánto pagarías por alquilar una bicicleta de un vecino por un día?</div>
+      <div class="q-hint">Precio justo que estarías dispuesto/a a pagar.</div>
+      <div class="options" id="opts11" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="option" data-q="11" data-v="menos5" onclick="selectOption(this,'radio')" style="flex-direction:column; text-align:center; align-items:center; padding:18px 12px;">
+          <div class="option-radio"></div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif; font-size:22px; font-weight:800; color:var(--sage); margin-top:8px;">-5€</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">Menos de 5€</div>
+        </div>
+        <div class="option" data-q="11" data-v="5-10" onclick="selectOption(this,'radio')" style="flex-direction:column; text-align:center; align-items:center; padding:18px 12px;">
+          <div class="option-radio"></div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif; font-size:22px; font-weight:800; color:var(--sage); margin-top:8px;">5–10€</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">Precio razonable</div>
+        </div>
+        <div class="option" data-q="11" data-v="10-15" onclick="selectOption(this,'radio')" style="flex-direction:column; text-align:center; align-items:center; padding:18px 12px;">
+          <div class="option-radio"></div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif; font-size:22px; font-weight:800; color:var(--sage); margin-top:8px;">10–15€</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">Si el objeto es bueno</div>
+        </div>
+        <div class="option" data-q="11" data-v="mas15" onclick="selectOption(this,'radio')" style="flex-direction:column; text-align:center; align-items:center; padding:18px 12px;">
+          <div class="option-radio"></div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif; font-size:22px; font-weight:800; color:var(--sage); margin-top:8px;">+15€</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">Si vale la pena</div>
+        </div>
+      </div>
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(11)">←</div>
+      <div class="btn-next disabled" id="next11" onclick="goNext(11)">Siguiente →</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA 12: Cierre ════ -->
+  <div class="screen" id="s12">
+    <div class="section-intro" style="background:var(--clay);">
+      <div class="si-icon">💬</div>
+      <div class="si-title">Última pregunta</div>
+      <div class="si-desc">Tu opinión honesta vale más que cualquier dato.</div>
+    </div>
+    <div class="q-card" style="margin-top:12px;">
+      <div class="q-label">Pregunta 12 de 12</div>
+      <div class="q-text">¿Algo más que quieras contarnos? <span class="optional-badge">opcional</span></div>
+      <div class="q-hint">Ideas, dudas, lo que se te ocurra. Cualquier cosa nos ayuda.</div>
+      <textarea class="q-textarea" id="openAnswer" placeholder="Escribe aquí tu opinión…" oninput="updateCharCount(this)" maxlength="400"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/400</div>
+    </div>
+    <div class="q-card" style="margin-top:0;">
+      <div class="q-label">¿Quieres saber qué pasa con Swapin?</div>
+      <div class="q-text" style="font-size:15px; margin-bottom:12px;">Déjanos tu email y te avisamos cuando lancemos. <span class="optional-badge">opcional</span></div>
+      <input type="email" class="q-input" id="emailInput" placeholder="tu@email.com">
+    </div>
+    <div class="q-nav">
+      <div class="btn-back" onclick="goBack(12)">←</div>
+      <div class="btn-next" id="next12" style="background:var(--sage);" onclick="submitSurvey()">Enviar encuesta ✓</div>
+    </div>
+  </div>
+
+  <!-- ════ THANK YOU ════ -->
+  <div class="thankyou" id="thankyou">
+    <div class="ty-icon">🌿</div>
+    <div class="ty-title">¡Muchas gracias!</div>
+    <div class="ty-sub">Tu opinión nos ayuda a construir algo que realmente tenga sentido para Barcelona.</div>
+
+    <div class="ty-card">
+      <div class="ty-card-title">¿Qué hacemos con tus respuestas?</div>
+      <div class="ty-card-desc">Las analizamos junto a las de otras personas para entender si Swapin resuelve un problema real. Si hay suficiente demanda, seguimos adelante.</div>
+    </div>
+    <div class="ty-card">
+      <div class="ty-card-title">¿Cuándo sabremos más?</div>
+      <div class="ty-card-desc">Esperamos tener resultados en las próximas semanas. Si dejaste tu email, serás de los primeros en saberlo.</div>
+    </div>
+
+    <div class="ty-logo">swap<span>in</span></div>
+    <div style="font-size:12px; color:var(--muted); margin-top:8px; font-style:italic;">Comparte la experiencia.</div>
+  </div>
+
+</div><!-- /survey-wrap -->
+
+<script>
+const TOTAL = 12;
+let answers = {};
+let currentScreen = 1;
+
+// Build dots
+function buildDots() {
+  const dots = document.getElementById('stepDots');
+  dots.innerHTML = '';
+  for(let i=1;i<=TOTAL;i++){
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i < currentScreen ? ' done' : i === currentScreen ? ' active' : '');
+    dots.appendChild(d);
+  }
+}
+
+function updateProgress() {
+  const pct = ((currentScreen - 1) / TOTAL) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('stepCurrent').textContent = currentScreen;
+  buildDots();
+}
+
+function selectOption(el, type) {
+  const q = el.dataset.q;
+  if(type === 'radio') {
+    document.querySelectorAll(`.option[data-q="${q}"]`).forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers[q] = el.dataset.v;
+  } else {
+    el.classList.toggle('selected');
+    const selected = [...document.querySelectorAll(`.option[data-q="${q}"].selected`)].map(o => o.dataset.v);
+    answers[q] = selected;
+  }
+  // enable next
+  const nextBtn = document.getElementById('next' + currentScreen);
+  if(nextBtn) {
+    const hasAnswer = Array.isArray(answers[q]) ? answers[q].length > 0 : !!answers[q];
+    nextBtn.classList.toggle('disabled', !hasAnswer);
+  }
+}
+
+function goNext(from) {
+  const nextBtn = document.getElementById('next' + from);
+  if(nextBtn && nextBtn.classList.contains('disabled')) return;
+  const curr = document.getElementById('s' + from);
+  const next = document.getElementById('s' + (from + 1));
+  if(!next) return;
+  curr.classList.remove('active');
+  next.classList.add('active');
+  next.classList.remove('back');
+  currentScreen = from + 1;
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goBack(from) {
+  const curr = document.getElementById('s' + from);
+  const prev = document.getElementById('s' + (from - 1));
+  if(!prev) return;
+  curr.classList.remove('active');
+  prev.classList.add('active', 'back');
+  currentScreen = from - 1;
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateCharCount(el) {
+  document.getElementById('charCount').textContent = el.value.length;
+}
+
+function submitSurvey() {
+  answers['open'] = document.getElementById('openAnswer').value;
+  answers['email'] = document.getElementById('emailInput').value;
+
+  // hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('stepIndicator').style.display = 'none';
+  document.getElementById('thankyou').classList.add('active');
+  document.getElementById('progressBar').style.width = '100%';
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  console.log('Respuestas:', answers);
+  // aquí conectarías con tu backend / Google Forms / Airtable
+}
+
+function toggleOtroInput(el) {
+  const wrap = document.getElementById('otro-input-wrap');
+  const isSelected = el.classList.contains('selected');
+  wrap.style.display = isSelected ? 'block' : 'none';
+  if (!isSelected) {
+    document.getElementById('otro-input').value = '';
+    answers['8_otro'] = '';
+  }
+  if (isSelected) document.getElementById('otro-input').focus();
+}
+
+function saveOtroValue(el) {
+  answers['8_otro'] = el.value.trim();
+}
+
+// init
+updateProgress();
+</script>
+</body>
+</html>

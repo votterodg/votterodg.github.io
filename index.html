@@ -478,10 +478,11 @@ body {
       <div class="q-text">¿En qué zona de Barcelona vives?</div>
       <div class="options" id="opts2">
         <div class="option" data-q="2" data-v="gracia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Gràcia / Sarrià / Les Corts</div></div>
-        <div class="option" data-q="2" data-v="eixample" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Eixample / Sant Antoni</div></div>
+        <div class="option" data-q="2" data-v="eixample" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Eixample / Sant Antoni / Raval</div></div>
         <div class="option" data-q="2" data-v="poblenou" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Poblenou / Sant Martí</div></div>
         <div class="option" data-q="2" data-v="sants" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Sants / Montjuïc / Hostafrancs</div></div>
         <div class="option" data-q="2" data-v="horta" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Horta / Nou Barris / Sant Andreu</div></div>
+        <div class="option" data-q="2" data-v="sagrada_familia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Sagrada Familia / El Clot / Fort Pienc</div></div>
         <div class="option" data-q="2" data-v="gotico" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Gótico / Barceloneta / El Born</div></div>
         <div class="option" data-q="2" data-v="area_metro" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-label">Área metropolitana (fuera BCN)</div></div>
       </div>
@@ -665,13 +666,13 @@ body {
     <div class="q-card" style="margin-top:16px;">
       <div class="q-label">Pregunta 10 de 12</div>
       <div class="q-text">¿Qué es lo que más te frenaría a usar Swapin?</div>
-      <div class="q-hint">Selecciona tu principal preocupación.</div>
+      <div class="q-hint">Puedes seleccionar varias opciones.</div>
       <div class="options" id="opts10">
-        <div class="option" data-q="10" data-v="confianza" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">🔐</div><div class="option-label">No me fío de desconocidos<div class="option-sub">No sé quién va a usar mis cosas</div></div></div>
-        <div class="option" data-q="10" data-v="danos" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">💔</div><div class="option-label">Que dañen o pierdan el objeto<div class="option-sub">¿Quién responde si algo sale mal?</div></div></div>
-        <div class="option" data-q="10" data-v="molestia" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">😓</div><div class="option-label">Es complicado logísticamente<div class="option-sub">Quedar para entregar, horarios…</div></div></div>
-        <div class="option" data-q="10" data-v="precio" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">💶</div><div class="option-label">El precio no compensa<div class="option-sub">Prefiero comprar directamente</div></div></div>
-        <div class="option" data-q="10" data-v="nada" onclick="selectOption(this,'radio')"><div class="option-radio"></div><div class="option-emoji">👍</div><div class="option-label">Nada, me parece bien la idea<div class="option-sub">Lo usaría sin problema</div></div></div>
+        <div class="option" data-q="10" data-v="confianza" onclick="selectOption(this,'checkbox')"><div class="option-checkbox"></div><div class="option-emoji">🔐</div><div class="option-label">No me fío de desconocidos<div class="option-sub">No sé quién va a usar mis cosas</div></div></div>
+        <div class="option" data-q="10" data-v="danos" onclick="selectOption(this,'checkbox')"><div class="option-checkbox"></div><div class="option-emoji">💔</div><div class="option-label">Que dañen o pierdan el objeto<div class="option-sub">¿Quién responde si algo sale mal?</div></div></div>
+        <div class="option" data-q="10" data-v="molestia" onclick="selectOption(this,'checkbox')"><div class="option-checkbox"></div><div class="option-emoji">😓</div><div class="option-label">Es complicado logísticamente<div class="option-sub">Quedar para entregar, horarios…</div></div></div>
+        <div class="option" data-q="10" data-v="precio" onclick="selectOption(this,'checkbox')"><div class="option-checkbox"></div><div class="option-emoji">💶</div><div class="option-label">El precio no compensa<div class="option-sub">Prefiero comprar directamente</div></div></div>
+        <div class="option" data-q="10" data-v="nada" onclick="selectOption(this,'checkbox')"><div class="option-checkbox"></div><div class="option-emoji">👍</div><div class="option-label">Nada, me parece bien la idea<div class="option-sub">Lo usaría sin problema</div></div></div>
       </div>
     </div>
     <div class="q-nav">
@@ -843,8 +844,39 @@ function submitSurvey() {
   document.getElementById('progressBar').style.width = '100%';
   window.scrollTo({top:0, behavior:'smooth'});
 
-  console.log('Respuestas:', answers);
-  // aquí conectarías con tu backend / Google Forms / Airtable
+  // Enviar a Google Sheets
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyhBVwL0oks6m8IaJNgKTa4Z05caMGn6muUPuzDK8tmGfDfroOpEG20Q2x9nWZQC6E/exec';
+  const SECRET_TOKEN = 'swapin_survey_2026';
+
+  const columnNames = {
+    '1': 'Edad',
+    '2': 'Zona Barcelona',
+    '3': 'Con quien vives',
+    '4': 'Frecuencia necesidad',
+    '5': 'Que haces cuando necesitas algo',
+    '6': 'Objetos que apenas usas',
+    '7': 'Reaccion a la idea',
+    '8': 'Objetos que alquilarias',
+    '8_otro': 'Objetos otro',
+    '9': 'Alquilar a desconocidos',
+    '10': 'Que te frenaria',
+    '11': 'Precio bicicleta por dia',
+    'open': 'Comentario abierto',
+    'email': 'Email'
+  };
+
+  const payload = { token: SECRET_TOKEN, Timestamp: new Date().toISOString() };
+  for (const key in answers) {
+    const col = columnNames[key] || key;
+    payload[col] = Array.isArray(answers[key]) ? answers[key].join(', ') : answers[key];
+  }
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.error('Error enviando encuesta:', err));
 }
 
 function toggleOtroInput(el) {
